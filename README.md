@@ -4,6 +4,22 @@ Aplicação web de suporte de TI em **Python e Django**, baseada nos objetivos d
 
 Esta primeira versão implementa o registro e o acompanhamento de incidentes e requisições, da abertura ao encerramento, com interface em português e API REST. As práticas de rastreabilidade, classificação e registro de atendimento se inspiram no contexto de ITIL e COBIT apresentado no trabalho; isso não representa certificação ou implementação integral desses frameworks.
 
+## Telas da aplicação
+
+Capturas reais da primeira versão em execução. Nomes, chamados e indicadores apresentados são fictícios, criados apenas para testar a aplicação.
+
+**Painel de acompanhamento**
+
+![Painel com indicadores, gráficos e chamados recentes](docs/screenshots/painel.png)
+
+**Tela de entrada**
+
+![Formulário de acesso ao Service Desk](docs/screenshots/login.png)
+
+**Detalhes de um chamado**
+
+![Chamado com solução, mensagens e histórico de atendimento](docs/screenshots/chamado.png)
+
 ## Executar localmente
 
 Requisito: **Python 3.12**. SQLite é incluído no Python; não é necessário instalar Node.js ou um banco separado.
