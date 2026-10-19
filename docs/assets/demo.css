@@ -1,0 +1,47 @@
+.demo-notice { min-height:36px; display:flex; align-items:center; justify-content:center; gap:8px; padding:8px 15px; background:#d7e7ca; color:#36542f; font-size:11px; text-align:center; line-height:1.5; }
+.demo-notice .icon { width:15px; height:15px; }
+.sidebar { top:36px; }
+.demo-notice a { text-decoration:underline; }
+.demo-login .login-layout { min-height:calc(100vh - 36px); }
+.demo-login .login-story { min-height:calc(100vh - 36px); }
+.demo-role { display:flex; align-items:center; gap:10px; }
+.demo-role select { font-size:11px; max-width:160px; }
+.demo-role .avatar { width:32px; height:32px; }
+.demo-role-label { font-size:11px; color:var(--muted); }
+.demo-login .login-form>.btn { margin:12px 0 0; }
+.demo-login .login-form .login-help { color:#718267; }
+.demo-info { margin:25px 0 15px; padding:15px; border-radius:8px; border:1px solid #dce6d4; background:#f0f5eb; font-size:12px; color:#5c7450; line-height:1.8; }
+.sidebar-bottom .demo-reset { display:block; width:100%; margin-top:20px; border:1px solid #91bda340; padding:10px; border-radius:6px; color:#c6d8bd; background:transparent; font-size:10px; }
+.sidebar-caption { line-height:1.8; }
+.demo-toast { position:fixed; bottom:25px; right:25px; z-index:100; max-width:min(440px,calc(100vw - 35px)); background:#f0f8ea; color:#3e6835; border:1px solid #afcea1; padding:16px 20px; border-radius:10px; font-size:12px; line-height:1.75; box-shadow:0 8px 28px #123c3625; }
+.demo-toast.error { color:#984f43; background:#fff2ed; border-color:#dfb2a3; }
+.demo-form .field-wide { grid-column:1/-1; }
+.demo-messages .field { margin-top:20px; }
+.demo-card-link { margin-bottom:20px; display:block; }
+.article-reading header { padding:0; background:none; border:none; height:auto; }
+.demo-system-note { color:#819079; font-size:11px; margin-top:16px; line-height:1.85; }
+.demo-empty { padding:50px; text-align:center; }
+.demo-role .btn { padding:8px 12px; min-height:36px; }
+.demo-role select:focus { outline:2px solid #648e68; }
+.article-draft-note { margin-bottom:15px; }
+.demo-help-card { margin-top:20px; }
+.login-action-note { margin-top:17px; font-size:11px; color:#7a8b70; line-height:1.8; }
+.login-form h2 { line-height:1.4; }
+.detail-heading h1 { max-width:750px; }
+.demo-mobile-source { display:none; }
+@media(max-width:980px) { .demo-role-label { display:none; } .demo-role select { max-width:130px; font-size:10px; } .demo-role .btn { font-size:10px; } }
+@media(max-width:700px) {
+  .demo-notice { font-size:9px; min-height:36px; padding:7px 10px; }
+  .sidebar { top:auto; }
+  .demo-role { gap:6px; }
+  .demo-role .avatar { display:none; }
+  .demo-role select { max-width:121px; padding:8px; min-height:34px; }
+  .topbar { padding:0 16px; gap:8px; }
+  .breadcrumb { max-width:140px; font-size:10px; }
+  .demo-login .login-story { min-height:auto; }
+  .demo-login .login-layout { min-height:auto; }
+  .demo-reset { font-size:10px; }
+  .demo-mobile-source { display:inline; }
+  .demo-toast { bottom:15px; right:15px; }
+  .login-form .btn { white-space:normal; text-align:left; }
+}

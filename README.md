@@ -4,6 +4,24 @@ Aplicação web de suporte de TI em **Python e Django**, baseada nos objetivos d
 
 A aplicação implementa o registro e o acompanhamento de incidentes, requisições e dúvidas, da abertura ao encerramento, com interface em português, central de ajuda e API REST. As práticas de rastreabilidade, classificação e registro de atendimento se inspiram no contexto de ITIL e COBIT apresentado no trabalho; isso não representa certificação ou implementação integral desses frameworks.
 
+## Demonstração no GitHub Pages
+
+A demonstração navegável está pronta em `docs/index.html`. Após ativar o Pages, ela pode ser acessada em **https://th3destroyer.github.io/TCC/**. Ela permite conhecer o painel, os chamados, a central de ajuda e o atendimento de exemplo sem instalar Python.
+
+Para ativar a publicação, um administrador do repositório deve abrir **Settings → Pages → Build and deployment**, escolher **Deploy from a branch**, selecionar a branch **main** e a pasta **/docs** e salvar. A ativação e o build devem ser conferidos no GitHub antes de considerar o endereço disponível. Se o GitHub indicar que o plano do repositório não permite Pages, será necessário um plano compatível; não altere a visibilidade do repositório sem avaliar o conteúdo e autorizar essa mudança.
+
+A versão do Pages é uma **demonstração estática com dados fictícios**. Há botões para entrar como solicitante ou técnico, sem senha, e alternar entre os perfis. Chamados, mensagens, avaliações e artigos de exemplo ficam apenas no armazenamento do navegador; não são enviados ao servidor Django nem compartilhados com outras pessoas. Não use dados reais. “Restaurar dados de exemplo” limpa as alterações feitas nesse navegador.
+
+O sistema Django completo, com autenticação, regras no servidor e banco de dados, continua disponível neste repositório e requer a instalação descrita abaixo.
+
+Para manter a demonstração após mudanças nos estilos ou nas orientações, execute:
+
+```bash
+python scripts/build_pages.py
+```
+
+Esse comando usa somente a biblioteca padrão do Python e atualiza os estilos, ícones e orientações estáticos em `docs/assets/`. O JavaScript da demonstração está em `docs/assets/demo.js`. Para testar o site localmente em um subdiretório, use um servidor HTTP e valide a navegação por links e formulários; abrir diretamente como `file://` não permite carregar o JSON em todos os navegadores.
+
 ## Telas da aplicação
 
 Capturas reais da primeira versão em execução. Nomes, chamados e indicadores apresentados são fictícios, criados apenas para testar a aplicação.
