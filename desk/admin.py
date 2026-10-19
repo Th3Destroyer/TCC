@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 
-from .models import Category, Comment, Department, Profile, Ticket, TicketEvent
+from .models import Category, Comment, Department, KnowledgeArticle, Profile, Ticket, TicketEvent
 
 admin.site.site_header = "Service Desk · Administração"
 admin.site.site_title = "Service Desk Municipal"
@@ -56,3 +56,10 @@ class TicketEventAdmin(ReadOnlyAdmin):
 @admin.register(Comment)
 class CommentAdmin(ReadOnlyAdmin):
     list_display = ["ticket", "author", "internal", "created_at"]
+
+
+@admin.register(KnowledgeArticle)
+class ArticleAdmin(ReadOnlyAdmin):
+    list_display = ["title", "category", "published", "updated_by", "updated_at"]
+    list_filter = ["published", "category"]
+    search_fields = ["title", "summary", "body"]

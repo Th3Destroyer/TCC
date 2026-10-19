@@ -2,9 +2,10 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import decorators, exceptions, permissions, response, serializers, viewsets
 
 from .metrics import ticket_metrics
-from .models import Category, Comment, Department, Ticket, TicketEvent
+from .models import Category, Comment, Department, KnowledgeArticle, Ticket, TicketEvent
 from .permissions import is_support, support_users, visible_tickets
-from .services import add_comment, open_ticket, requester_action, update_ticket
+from .services import add_comment, claim_ticket, open_ticket, requester_action, update_ticket
+from .help_views import filter_articles
 from .views import filter_tickets
 
 
@@ -60,6 +61,7 @@ class TicketSerializer(serializers.ModelSerializer):
     department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.filter(active=True))
     assigned_to = serializers.PrimaryKeyRelatedField(queryset=support_users(), allow_null=True, required=False)
     version = serializers.IntegerField(required=False, min_value=1)
+    source_article = serializers.PrimaryKeyRelatedField(queryset=KnowledgeArticle.objects.filter(published=True), required=False, allow_null=True)
 
     def get_requester_name(self, obj):
         return obj.requester.get_full_name() or obj.requester.username
@@ -69,7 +71,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ["id", "reference", "title", "description", "kind", "category", "category_name", "department", "department_name", "equipment", "priority", "status", "status_label", "requester", "requester_name", "assigned_to", "assigned_name", "resolution", "created_at", "updated_at", "first_response_at", "resolved_at", "closed_at", "version"]
+        fields = ["id", "reference", "title", "description", "kind", "category", "category_name", "department", "department_name", "equipment", "priority", "status", "status_label", "requester", "requester_name", "assigned_to", "assigned_name", "resolution", "source_article", "created_at", "updated_at", "first_response_at", "resolved_at", "closed_at", "version"]
         read_only_fields = ["id", "requester", "created_at", "updated_at", "first_response_at", "resolved_at", "closed_at"]
 
     def validate(self, attrs):
@@ -130,6 +132,14 @@ class TicketViewSet(viewsets.ModelViewSet):
         return response.Response(self.get_serializer(ticket).data)
 
     @decorators.action(detail=True, methods=["post"])
+    def claim(self, request, pk=None):
+        version = request.data.get("version")
+        if type(version) is not int or version < 1:
+            raise exceptions.ValidationError({"version": "Informe a versão atual como inteiro positivo."})
+        ticket = call_service(claim_ticket, request.user, self.get_object(), version)
+        return response.Response(self.get_serializer(ticket).data)
+
+    @decorators.action(detail=True, methods=["post"])
     def close(self, request, pk=None):
         return self._requester_action(request, "close")
 
@@ -146,6 +156,22 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Department.objects.filter(active=True)
     serializer_class = DepartmentSerializer
+
+
+class ArticleSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", default="Orientações gerais", read_only=True)
+
+    class Meta:
+        model = KnowledgeArticle
+        fields = ["id", "title", "summary", "body", "category", "category_name", "featured", "updated_at"]
+
+
+class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        qs = KnowledgeArticle.objects.filter(published=True).select_related("category")
+        return filter_articles(qs, self.request.query_params) if self.action == "list" else qs
 
 
 @decorators.api_view(["GET"])

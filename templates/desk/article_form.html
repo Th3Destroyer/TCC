@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{% if article %}Editar artigo{% else %}Novo artigo{% endif %}{% endblock %}{% block breadcrumb %}Artigos de ajuda{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'article_manage' %}">← Voltar para os artigos</a>
+<div class="page-heading"><div><div class="eyebrow">COMPARTILHE UMA BOA ORIENTAÇÃO</div><h1>{% if article %}Editar artigo{% else %}Novo artigo{% endif %}<span class="title-dot">.</span></h1><p>Transforme respostas frequentes em conhecimento para toda a equipe.</p></div></div>
+<div class="form-layout"><section class="panel form-panel"><div class="panel-heading"><div><h2>Conteúdo da orientação</h2><p>Os campos com * são obrigatórios.</p></div></div><form method="post">{% csrf_token %}<div class="form-grid article-form-grid">{% include 'desk/_form_fields.html' %}</div><div class="form-actions"><a class="btn btn-secondary" href="{% url 'article_manage' %}">Cancelar</a><button class="btn btn-primary" type="submit">Salvar orientação</button></div></form></section><aside class="help-panel"><h3>Uma resposta clara economiza tempo.</h3><ol><li>Dê um título fácil de pesquisar.</li><li>Descreva uma etapa de cada vez.</li><li>Explique quando pedir ajuda à TI.</li><li>Revise antes de publicar.</li></ol><p>Sem a opção de publicação, o artigo fica como rascunho e pode ser revisado pela TI.</p></aside></div>
+{% endblock %}

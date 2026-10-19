@@ -41,10 +41,45 @@ class Profile(models.Model):
         return str(self.user)
 
 
+class KnowledgeArticle(models.Model):
+    title = models.CharField("título", max_length=160)
+    summary = models.CharField("resumo", max_length=260)
+    body = models.TextField("orientações", max_length=20000)
+    category = models.ForeignKey(Category, verbose_name="categoria", on_delete=models.PROTECT, null=True, blank=True)
+    published = models.BooleanField("publicar na central de ajuda", default=False, db_index=True)
+    featured = models.BooleanField("destacar como pergunta frequente", default=False)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="autor", on_delete=models.SET_NULL, null=True, blank=True, related_name="help_articles")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="última edição por", on_delete=models.SET_NULL, null=True, blank=True, related_name="edited_help_articles")
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    bootstrap_key = models.SlugField(max_length=100, unique=True, null=True, editable=False)
+
+    class Meta:
+        ordering = ["-featured", "title", "pk"]
+        verbose_name = "artigo de ajuda"
+        verbose_name_plural = "artigos de ajuda"
+
+    def __str__(self):
+        return self.title
+
+
+class ArticleFeedback(models.Model):
+    article = models.ForeignKey(KnowledgeArticle, on_delete=models.CASCADE, related_name="feedback")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    helpful = models.BooleanField("foi útil")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["article", "user"], name="one_feedback_per_user_article")]
+        verbose_name = "avaliação de artigo"
+        verbose_name_plural = "avaliações de artigos"
+
+
 class Ticket(models.Model):
     class Kind(models.TextChoices):
         INCIDENT = "incident", "Incidente"
         REQUEST = "request", "Requisição de serviço"
+        QUESTION = "question", "Dúvida / orientação"
 
     class Status(models.TextChoices):
         OPEN = "open", "Aberto"
@@ -71,6 +106,7 @@ class Ticket(models.Model):
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="solicitante", on_delete=models.PROTECT, related_name="requested_tickets")
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name="técnico responsável", on_delete=models.PROTECT, null=True, blank=True, related_name="assigned_tickets")
     resolution = models.TextField("solução aplicada", max_length=10000, blank=True)
+    source_article = models.ForeignKey(KnowledgeArticle, verbose_name="orientação consultada", on_delete=models.SET_NULL, null=True, blank=True, related_name="tickets")
     created_at = models.DateTimeField("aberto em", default=timezone.now, editable=False, db_index=True)
     updated_at = models.DateTimeField("atualizado em", auto_now=True)
     first_response_at = models.DateTimeField("primeira resposta técnica", null=True, blank=True, editable=False)

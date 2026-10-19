@@ -26,7 +26,16 @@ def support_users():
 def visible_tickets(user):
     from .models import Ticket
 
-    qs = Ticket.objects.select_related("requester", "assigned_to", "category", "department")
+    qs = Ticket.objects.select_related("requester", "assigned_to", "category", "department", "source_article")
     if not user.is_authenticated or not user.is_active:
         return qs.none()
     return qs if is_support(user) else qs.filter(requester=user)
+
+
+def visible_articles(user):
+    from .models import KnowledgeArticle
+
+    qs = KnowledgeArticle.objects.select_related("category", "author", "updated_by")
+    if not user.is_authenticated or not user.is_active:
+        return qs.none()
+    return qs if is_support(user) else qs.filter(published=True)

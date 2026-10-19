@@ -28,13 +28,31 @@ def open_ticket(actor, data):
     if not actor.is_authenticated or not actor.is_active:
         raise PermissionDenied
     fields = {key: data[key] for key in (
-        "title", "description", "kind", "category", "department", "equipment", "priority"
+        "title", "description", "kind", "category", "department", "equipment", "priority", "source_article"
     ) if key in data}
+    if fields.get("source_article") and not fields["source_article"].published:
+        raise ValidationError({"source_article": "Esta orientação não está publicada."})
     ticket = Ticket(requester=actor, **fields)
     ticket.full_clean()
     ticket.save()
     TicketEvent.objects.create(ticket=ticket, actor=actor, message="Chamado aberto.")
     return ticket
+
+
+@transaction.atomic
+def claim_ticket(actor, ticket, expected_version):
+    if not is_support(actor):
+        raise PermissionDenied("Somente a equipe de TI pode assumir chamados.")
+    ticket = Ticket.objects.select_for_update().get(pk=ticket.pk)
+    _check_version(ticket, expected_version)
+    if ticket.is_finished:
+        raise ValidationError("Reabra o chamado antes de assumir o atendimento.")
+    if ticket.assigned_to_id and ticket.assigned_to_id != actor.pk:
+        raise ValidationError("Este chamado já possui responsável. Atualize a página ou solicite o encaminhamento à equipe.")
+    changes = {"assigned_to": actor}
+    if ticket.status == S.OPEN:
+        changes["status"] = S.TRIAGE
+    return update_ticket(actor, ticket, changes, expected_version)
 
 
 @transaction.atomic

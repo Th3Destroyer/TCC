@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#123c36">
   <title>{% block title %}Visão geral{% endblock %} · Service Desk Municipal</title>
   <link rel="stylesheet" href="{% static 'desk/app.css' %}">
+  <link rel="stylesheet" href="{% static 'desk/help.css' %}">
   <script src="{% static 'desk/app.js' %}" defer></script>
 </head>
 <body>
@@ -20,6 +21,7 @@
   <nav>
     <a class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">{% icon "grid" %} Visão geral</a>
     <a class="{% if 'ticket' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ticket_list' %}">{% icon "ticket" %} {% if support_member %}Chamados{% else %}Meus chamados{% endif %}</a>
+    <a class="{% if request.resolver_match.url_name == 'help_center' or 'article' in request.resolver_match.url_name or request.resolver_match.url_name == 'question_create' %}active{% endif %}" href="{% url 'help_center' %}">{% icon "help" %} Central de ajuda</a>
     {% if support_member %}<a class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}">{% icon "chart" %} Indicadores</a>{% endif %}
   </nav>
   {% if desk_manager and user.is_staff %}<div class="nav-label">GESTÃO</div><nav><a href="{% url 'admin:index' %}"><span aria-hidden="true">⚙</span> Administração</a></nav>{% endif %}

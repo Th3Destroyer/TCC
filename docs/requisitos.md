@@ -37,3 +37,16 @@ O recorte é uma aplicação interna para administração pública municipal. A 
 ## Limites das evidências
 
 Testes funcionais demonstram comportamento do software neste ambiente. A avaliação de ganho de eficiência, satisfação e redução do tempo de atendimento depende de coleta real e comparação com a linha de base descrita no TCC. Não existem dados de pesquisa reais nem integração com sistemas da prefeitura nesta entrega.
+
+## Complementos solicitados após a primeira versão
+
+O autor solicitou complementar a área de chamados e incluir suporte a dúvidas. A entrega acrescenta:
+
+- Tipo de chamado Dúvida / orientação, com as mesmas regras de propriedade, histórico e atendimento.
+- Contadores por fila, filtros por tipo e chamados sem responsável e ação de assumir atendimento pela TI.
+- Central de ajuda autenticada com busca, categorias e perguntas frequentes.
+- Artigos publicados para usuários e rascunhos restritos à equipe de TI.
+- Gerenciamento de orientações pela equipe de TI e avaliação de utilidade por usuário.
+- Referência ao artigo consultado quando a dúvida é encaminhada ao suporte.
+
+As dez orientações iniciais são conteúdo de apoio editável. Não são normas oficiais da prefeitura. O suporte às dúvidas ocorre pela conversa do chamado, sem chatbot, atendimento em tempo real ou integração externa.

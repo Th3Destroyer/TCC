@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% load desk_tags %}
+{% block title %}Central de ajuda{% endblock %}
+{% block breadcrumb %}Central de ajuda{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><div class="eyebrow">ORIENTAÇÃO PARA O DIA A DIA</div><h1>Como podemos ajudar<span class="title-dot">?</span></h1><p>Encontre uma orientação ou converse com a equipe de TI.</p></div>
+  {% if support_member %}<a class="btn btn-secondary" href="{% url 'article_manage' %}">{% icon 'book' %} Gerenciar artigos</a>{% endif %}
+</div>
+<section class="help-hero" aria-label="Buscar orientações">
+  <span class="hero-symbol">{% icon 'help' %}</span>
+  <div><h2>Uma resposta pode estar mais perto do que você imagina.</h2><p>Pesquise por senha, impressora, rede ou outro assunto.</p></div>
+  <form class="help-search" method="get">
+    <label class="sr-only" for="help-search">Pesquisar na central de ajuda</label>
+    <span>{% icon 'search' %}</span><input id="help-search" name="q" type="search" maxlength="200" value="{{ request.GET.q }}" placeholder="Qual é a sua dúvida?">
+    {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
+    <button class="btn btn-primary" type="submit">Buscar orientação</button>
+  </form>
+</section>
+<div class="help-shortcuts">
+  <a href="{% url 'ticket_create' %}" class="help-shortcut"><span class="shortcut-icon">{% icon 'ticket' %}</span><div><strong>Preciso de suporte técnico</strong><p>Registre uma falha ou solicite um serviço.</p></div>{% icon 'arrow-up-right' %}</a>
+  <a href="{% url 'question_create' %}" class="help-shortcut"><span class="shortcut-icon">{% icon 'message' %}</span><div><strong>Quero tirar uma dúvida</strong><p>Envie sua pergunta para a equipe de TI.</p></div>{% icon 'arrow-up-right' %}</a>
+  <a href="{% url 'ticket_list' %}?kind=question" class="help-shortcut"><span class="shortcut-icon">{% icon 'clock' %}</span><div><strong>{% if support_member %}Acompanhar dúvidas{% else %}Acompanhar minhas dúvidas{% endif %}</strong><p>{{ open_questions }} em aberto no momento.</p></div>{% icon 'arrow-up-right' %}</a>
+</div>
+<div class="help-layout">
+  <div>
+    <section aria-labelledby="articles-heading">
+      <div class="section-heading"><div><h2 id="articles-heading">Orientações e tutoriais</h2><p class="muted">{{ page_obj.paginator.count }} resultado{{ page_obj.paginator.count|pluralize }}{% if request.GET.q %} para “{{ request.GET.q }}”{% endif %}</p></div>{% if request.GET.q or request.GET.category %}<a class="text-link" href="{% url 'help_center' %}">Limpar filtros</a>{% endif %}</div>
+      <div class="article-grid">
+        {% for article in page_obj %}
+        <a class="article-card" href="{% url 'article_detail' article.pk %}"><div class="article-card-top"><span class="subtle-pill">{{ article.category|default:'Orientações gerais' }}</span>{% icon 'book' %}</div><h3>{{ article.title }}</h3><p>{{ article.summary }}</p><span class="text-link">Ler orientação {% icon 'arrow-right' %}</span></a>
+        {% empty %}<div class="panel empty-state"><span class="empty-icon">{% icon 'search' %}</span><h3>Nenhuma orientação encontrada</h3><p>Tente outra palavra ou envie sua pergunta para a equipe.</p><a class="btn btn-primary" href="{% url 'question_create' %}">Enviar minha dúvida</a></div>{% endfor %}
+      </div>
+      {% include 'desk/_pagination.html' %}
+    </section>
+    {% if frequent_articles %}<section class="panel faq-panel"><div class="panel-heading"><div><h2>Perguntas frequentes</h2><p>Respostas para as situações mais comuns</p></div></div><div class="faq-list">{% for article in frequent_articles %}<details><summary>{{ article.title }}{% icon 'chevron' %}</summary><div><p>{{ article.body|truncatechars:320|linebreaksbr }}</p><a class="text-link" href="{% url 'article_detail' article.pk %}">Ver orientação completa →</a></div></details>{% endfor %}</div></section>{% endif %}
+  </div>
+  <aside>
+    <section class="panel"><div class="panel-heading"><h2>Explorar por assunto</h2></div><nav class="help-categories" aria-label="Categorias de ajuda"><a href="{% url 'help_center' %}{% if request.GET.q %}?q={{ request.GET.q|urlencode }}{% endif %}" class="{% if not request.GET.category %}selected{% endif %}">Todos os assuntos <span>{{ article_count }}</span></a>{% if general_count %}<a href="?category=general{% if request.GET.q %}&amp;q={{ request.GET.q|urlencode }}{% endif %}" class="{% if request.GET.category == 'general' %}selected{% endif %}">Orientações gerais <span>{{ general_count }}</span></a>{% endif %}{% for category in categories %}<a href="?category={{ category.pk }}{% if request.GET.q %}&amp;q={{ request.GET.q|urlencode }}{% endif %}" class="{% if request.GET.category == category.pk|stringformat:'s' %}selected{% endif %}">{{ category.name }} <span>{{ category.article_count }}</span></a>{% endfor %}</nav></section>
+    <section class="help-panel"><span class="help-icon">{% icon 'message' %}</span><h3>Não encontrou sua resposta?</h3><p>Envie sua dúvida. Você receberá um protocolo e poderá conversar com a equipe pelo chamado.</p><a class="btn btn-primary full-width" href="{% url 'question_create' %}">Falar com o suporte {% icon 'arrow-right' %}</a><p class="privacy-note">O acompanhamento acontece pela plataforma. Não há envio automático por e-mail.</p></section>
+  </aside>
+</div>
+{% endblock %}

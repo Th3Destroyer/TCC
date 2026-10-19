@@ -5,15 +5,16 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.forms import HiddenInput
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .forms import CommentForm, TicketForm, TicketUpdateForm
 from .metrics import ticket_metrics
-from .models import Category, Department, Ticket
+from .models import Category, Department, KnowledgeArticle, Ticket
 from .permissions import is_support, visible_tickets
-from .services import add_comment, open_ticket, requester_action, update_ticket
+from .services import add_comment, claim_ticket, open_ticket, requester_action, update_ticket
 
 
 def filter_tickets(qs, params, user):
@@ -24,7 +25,7 @@ def filter_tickets(qs, params, user):
         if reference_id.isdigit() and len(reference_id) < 12:
             criteria |= Q(pk=int(reference_id))
         qs = qs.filter(criteria)
-    for field, choices in (("status", Ticket.Status.values), ("priority", Ticket.Priority.values)):
+    for field, choices in (("status", Ticket.Status.values), ("priority", Ticket.Priority.values), ("kind", Ticket.Kind.values)):
         if params.get(field) in choices:
             qs = qs.filter(**{field: params[field]})
     if params.get("status") == "active":
@@ -37,6 +38,8 @@ def filter_tickets(qs, params, user):
             qs = qs.filter(**{f"{field}_id": int(value)})
     if params.get("mine") == "1" and is_support(user):
         qs = qs.filter(assigned_to=user)
+    if params.get("unassigned") == "1" and is_support(user):
+        qs = qs.filter(assigned_to__isnull=True).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
     return qs
 
 
@@ -51,13 +54,21 @@ def dashboard(request):
 
 @login_required
 def ticket_list(request):
-    tickets = filter_tickets(visible_tickets(request.user), request.GET, request.user)
+    scoped = visible_tickets(request.user)
+    tickets = filter_tickets(scoped, request.GET, request.user)
     params = request.GET.copy()
     params.pop("page", None)
     return render(request, "desk/ticket_list.html", {
         "page_obj": Paginator(tickets, 15).get_page(request.GET.get("page")),
         "statuses": Ticket.Status.choices,
         "priorities": Ticket.Priority.choices,
+        "kinds": Ticket.Kind.choices,
+        "queue_counts": {
+            "total": scoped.count(),
+            "active": scoped.exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED]).count(),
+            "questions": scoped.filter(kind=Ticket.Kind.QUESTION).count(),
+            "unassigned": scoped.filter(assigned_to__isnull=True).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED]).count(),
+        },
         "categories": Category.objects.all(),
         "departments": Department.objects.all(),
         "filter_query": params.urlencode(),
@@ -74,10 +85,27 @@ def _attach_errors(form, error):
 
 
 @login_required
-def ticket_create(request):
+def ticket_create(request, question=False):
     profile = getattr(request.user, "desk_profile", None)
     initial = {"department": profile.department_id} if profile else {}
-    form = TicketForm(request.POST or None, initial=initial)
+    if question:
+        initial.update(kind=Ticket.Kind.QUESTION, priority=Ticket.Priority.LOW)
+    source = None
+    source_id = request.GET.get("article", "")
+    if source_id.isdigit() and len(source_id) < 12:
+        source = get_object_or_404(KnowledgeArticle, pk=int(source_id), published=True)
+        initial.update(source_article=source, title=f"Dúvida sobre: {source.title}"[:160])
+        if source.category_id and source.category.active:
+            initial["category"] = source.category_id
+    form = TicketForm(request.POST if request.method == "POST" else None, initial=initial)
+    if question:
+        form.fields["kind"].widget = HiddenInput()
+        form.fields["kind"].disabled = True
+        form.fields.pop("equipment")
+        form.fields["title"].label = "Assunto da dúvida"
+        form.fields["title"].widget.attrs["placeholder"] = "Ex.: como solicitar acesso ao sistema?"
+        form.fields["description"].label = "Sua dúvida"
+        form.fields["description"].widget.attrs["placeholder"] = "Explique o que você precisa saber e quais orientações já consultou."
     if request.method == "POST" and form.is_valid():
         try:
             ticket = open_ticket(request.user, form.cleaned_data)
@@ -86,7 +114,10 @@ def ticket_create(request):
         else:
             messages.success(request, f"{ticket.reference} aberto. A equipe de TI acompanhará sua solicitação.")
             return redirect("ticket_detail", pk=ticket.pk)
-    return render(request, "desk/ticket_form.html", {"form": form})
+    return render(request, "desk/ticket_form.html", {
+        "form": form, "question_mode": question, "source_article": source,
+        "suggested_articles": KnowledgeArticle.objects.filter(published=True, featured=True)[:3],
+    })
 
 
 @login_required
@@ -142,11 +173,15 @@ def ticket_action(request, pk, action):
     except ValueError:
         version = 0
     try:
-        requester_action(request.user, ticket, action, version)
+        if action == "claim":
+            claim_ticket(request.user, ticket, version)
+        else:
+            requester_action(request.user, ticket, action, version)
     except ValidationError as error:
         messages.error(request, " ".join(error.messages))
     else:
-        messages.success(request, "Chamado encerrado." if action == "close" else "Chamado devolvido à triagem.")
+        text = {"claim": "Chamado atribuído a você. Atualize o atendimento quando iniciar o trabalho.", "close": "Chamado encerrado.", "reopen": "Chamado devolvido à triagem."}
+        messages.success(request, text.get(action, "Chamado atualizado."))
     return redirect("ticket_detail", pk=pk)
 
 

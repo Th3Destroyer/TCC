@@ -2,7 +2,7 @@
 
 Aplicação web de suporte de TI em **Python e Django**, baseada nos objetivos do TCC *Desenvolvimento e implementação de uma plataforma de Service Desk para gestão de incidentes de TI na administração pública municipal* (UNIP, 2026).
 
-Esta primeira versão implementa o registro e o acompanhamento de incidentes e requisições, da abertura ao encerramento, com interface em português e API REST. As práticas de rastreabilidade, classificação e registro de atendimento se inspiram no contexto de ITIL e COBIT apresentado no trabalho; isso não representa certificação ou implementação integral desses frameworks.
+A aplicação implementa o registro e o acompanhamento de incidentes, requisições e dúvidas, da abertura ao encerramento, com interface em português, central de ajuda e API REST. As práticas de rastreabilidade, classificação e registro de atendimento se inspiram no contexto de ITIL e COBIT apresentado no trabalho; isso não representa certificação ou implementação integral desses frameworks.
 
 ## Telas da aplicação
 
@@ -19,6 +19,16 @@ Capturas reais da primeira versão em execução. Nomes, chamados e indicadores 
 **Detalhes de um chamado**
 
 ![Chamado com solução, mensagens e histórico de atendimento](docs/screenshots/chamado.png)
+
+**Área de chamados**
+
+![Fila de atendimento com filtros, indicadores e dúvidas](docs/screenshots/chamados.png)
+
+**Central de ajuda e suporte a dúvidas**
+
+![Central de ajuda com busca, artigos, categorias e perguntas frequentes](docs/screenshots/central-ajuda.png)
+
+![Envio de uma dúvida após consultar um artigo](docs/screenshots/enviar-duvida.png)
 
 ## Executar localmente
 
@@ -38,6 +48,8 @@ python manage.py runserver 127.0.0.1:8000
 Abra o endereço local informado pelo Django e entre com a conta criada. O repositório **não contém contas ou senhas padrão**. O comando `bootstrap_desk` pode ser executado novamente: ele mantém os registros e as configurações existentes.
 
 As unidades iniciais são exemplos editáveis: Administração, Educação, Saúde, Finanças, Obras e Assistência Social. As categorias seguem o TCC: Hardware, Software, Conectividade, Impressoras, Telefonia e Criação de usuários.
+
+O bootstrap também disponibiliza dez orientações iniciais, incluindo senhas, impressoras, rede, programas, telefonia e uso da plataforma. São textos de apoio editáveis: a TI deve ajustá-los aos procedimentos locais. Reexecutar o comando não sobrescreve os artigos já editados nem republica um artigo retirado da central.
 
 Para acesso de outras máquinas da rede durante desenvolvimento, configure explicitamente os hosts autorizados e execute `runserver 0.0.0.0:8000`. O servidor de desenvolvimento não serve como implantação de produção.
 
@@ -83,6 +95,26 @@ stateDiagram-v2
 
 Encerrados não recebem mensagens até serem reabertos. Registros de mudanças incluem autor e data. Formulários de classificação usam uma versão do chamado para impedir que uma edição antiga sobrescreva mudanças recentes.
 
+## Chamados e suporte a dúvidas
+
+A área **Chamados** reúne incidentes, requisições e dúvidas. Os contadores respeitam o perfil do usuário. Há filtros por tipo e por chamados sem responsável, além dos filtros de situação, prioridade, unidade, categoria, texto e atribuídos à pessoa conectada.
+
+Na tela de detalhes, a TI pode usar **Assumir chamado** para atribuir a si um chamado sem responsável. Um chamado aberto passa para triagem. Essa ação registra autor e data e não conta como primeira resposta técnica. Ela não substitui o responsável de outro técnico e não pode ser usada em chamados resolvidos ou encerrados.
+
+No menu **Central de ajuda**, os usuários autenticados podem:
+
+- Pesquisar orientações e filtrar por assunto.
+- Ler artigos e perguntas frequentes.
+- Avaliar se uma orientação foi útil, com uma avaliação por usuário e artigo, que pode ser alterada.
+- Usar **Enviar dúvida sobre este artigo**, preservando a referência da orientação consultada.
+- Enviar uma pergunta diretamente pelo botão **Falar com o suporte**.
+
+A pergunta vira um chamado do tipo **Dúvida / orientação** (`question`), com protocolo, solicitante, unidade, categoria, prioridade, conversa e histórico. O usuário acompanha a resposta em seus chamados; a TI atende e registra a resposta, e o solicitante pode confirmar ou reabrir. É atendimento pela plataforma, sem chatbot, chat em tempo real ou envio automático de e-mail.
+
+A TI pode entrar em **Gerenciar artigos** para criar, editar, publicar ou retirar uma orientação da central. Rascunhos ficam visíveis somente para a TI; solicitantes não conseguem acessá-los nem conhecendo o endereço. Desmarcar a publicação preserva o texto como rascunho. O gerenciamento também exibe avaliações úteis e pedidos de melhoria. Os artigos são texto simples, com escape de HTML.
+
+Veja um roteiro de uso em [Testar chamados e central de ajuda](docs/testar-chamados-e-ajuda.md).
+
 ## Painel e indicadores
 
 - Chamados ativos, em atendimento, resolvidos/encerrados e críticos ativos.
@@ -108,11 +140,14 @@ Autenticação de sessão do Django, com CSRF obrigatório para operações de e
 | GET | `/api/tickets/{id}/history/` | Ler histórico |
 | POST | `/api/tickets/{id}/close/` | Solicitante confirma a solução |
 | POST | `/api/tickets/{id}/reopen/` | Solicitante devolve à triagem |
+| POST | `/api/tickets/{id}/claim/` | Técnico assume um chamado sem responsável |
 | GET | `/api/categories/` | Categorias ativas |
 | GET | `/api/departments/` | Unidades ativas |
+| GET | `/api/articles/` | Buscar artigos publicados (`q` e `category`) |
+| GET | `/api/articles/{id}/` | Ler uma orientação publicada |
 | GET | `/api/metrics/` | Indicadores globais (TI) |
 
-A listagem de chamados aceita `q`, `status`, `priority`, `category`, `department` e `mine=1`. Situações: `open`, `triage`, `in_progress`, `waiting`, `resolved`, `closed`; também existem os filtros `active` e `finished`. Prioridades: `low`, `medium`, `high`, `critical`. Tipos: `incident` e `request`.
+A listagem de chamados aceita `q`, `status`, `priority`, `kind`, `category`, `department`, `mine=1` e `unassigned=1` (TI). Situações: `open`, `triage`, `in_progress`, `waiting`, `resolved`, `closed`; também existem os filtros `active` e `finished`. Prioridades: `low`, `medium`, `high`, `critical`. Tipos: `incident`, `request` e `question`.
 
 Exemplo de corpo para abertura (substitua os IDs pelos cadastros do seu banco):
 
@@ -130,6 +165,8 @@ Exemplo de corpo para abertura (substitua os IDs pelos cadastros do seu banco):
 
 Exemplo de atualização pela TI: `{"status": "in_progress", "assigned_to": 2, "version": 1}`. Use o `version` retornado pela leitura mais recente. Confirmar/reabrir também exige `{"version": 3}` com a versão atual. Em uma mensagem, `internal: true` é permitido apenas à TI. Não há endpoint de exclusão de chamados.
 
+Para uma dúvida pela API, use `kind: "question"` e, opcionalmente, `source_article` com o ID de uma orientação publicada. O endpoint `claim` exige `{"version": 1}` com a versão atual. Os artigos são somente leitura na API; o gerenciamento é feito na interface web pela TI.
+
 ## Testar
 
 ```bash
@@ -138,7 +175,7 @@ python manage.py makemigrations --check --dry-run
 python manage.py test
 ```
 
-Os testes usam banco isolado. Cobrem o ciclo completo, permissões entre usuários, histórico, notas internas, exigência de solução e responsável, reabertura, conflitos de versão, CSRF, escape de HTML, exportação CSV, métricas, API e repetibilidade dos cadastros iniciais.
+Os testes usam banco isolado. Cobrem o ciclo completo, permissões entre usuários, histórico, notas internas, exigência de solução e responsável, reabertura, conflitos de versão, CSRF, escape de HTML, exportação CSV, métricas, API e repetibilidade dos cadastros iniciais. A central de ajuda também tem testes de busca, publicação, privacidade de rascunhos, avaliações, abertura de dúvida com artigo de origem e atribuição de responsável.
 
 ## Estrutura
 
@@ -150,6 +187,8 @@ desk/permissions.py Escopo por perfil e propriedade do chamado
 desk/views.py       Interface web, filtros e CSV
 desk/api.py         Serializadores e endpoints REST
 desk/metrics.py     Indicadores operacionais
+desk/help_views.py  Central de ajuda, artigos, avaliações e publicação
+desk/help_content.py Orientações iniciais, preservadas após edição
 desk/tests/         Testes funcionais web, API e regras de negócio
 templates/          HTML renderizado pelo Django
 static/desk/        CSS responsivo e JavaScript, sem dependência de CDN
