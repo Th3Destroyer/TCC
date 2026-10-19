@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% load desk_tags %}
+{% block title %}Entrar{% endblock %}
+{% block public_content %}
+<div class="login-layout">
+  <section class="login-story"><a class="brand" href="{% url 'login' %}"><span class="brand-icon">s<span>{% icon "arrow-up-right" %}</span></span><span>service desk<small>GESTÃO MUNICIPAL</small></span></a><div><span class="eyebrow">TECNOLOGIA A SERVIÇO DA CIDADE</span><h1>Um só lugar.<br>Todo o suporte<br>que você precisa.</h1><p>Registre solicitações, acompanhe os atendimentos e mantenha sua unidade conectada à equipe de TI.</p><div class="login-features"><span>✓ Atendimento centralizado</span><span>✓ Histórico de cada solicitação</span><span>✓ Comunicação com a equipe de TI</span></div></div><small>Service Desk Municipal · Desenvolvido para a administração pública</small></section>
+  <section class="login-form-wrap"><div class="login-form"><span class="section-tag">BEM-VINDO AO SERVICE DESK</span><h2>Acesse sua conta</h2><p class="muted">Entre para acompanhar seus chamados.</p>
+    {% if form.errors %}<div class="alert error" role="alert">Usuário ou senha inválidos. Confira seus dados e tente novamente.</div>{% endif %}
+    <form method="post">{% csrf_token %}<input type="hidden" name="next" value="{{ next }}"><div class="field"><label for="id_username">Usuário</label><input id="id_username" name="username" autocomplete="username" autofocus required maxlength="150" value="{{ form.username.value|default:'' }}" placeholder="Seu nome de usuário"></div><div class="field"><label for="id_password">Senha</label><input id="id_password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"></div><button class="btn btn-primary full-width" type="submit">Entrar no Service Desk <span aria-hidden="true">→</span></button></form><p class="login-help">Precisa de acesso ou esqueceu sua senha?<br>Entre em contato com o responsável de TI da sua unidade.</p>
+  </div></section>
+</div>
+{% endblock %}

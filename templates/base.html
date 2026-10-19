@@ -1,0 +1,43 @@
+{% load static desk_tags %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123c36">
+  <title>{% block title %}Visão geral{% endblock %} · Service Desk Municipal</title>
+  <link rel="stylesheet" href="{% static 'desk/app.css' %}">
+  <script src="{% static 'desk/app.js' %}" defer></script>
+</head>
+<body>
+{% include "desk/_icons.html" %}
+<a class="skip-link" href="#content">Pular para o conteúdo</a>
+{% if user.is_authenticated %}
+<aside class="sidebar" aria-label="Menu principal">
+  <a class="brand" href="{% url 'dashboard' %}"><span class="brand-icon">s<span>{% icon "arrow-up-right" %}</span></span><span>service desk<small>GESTÃO MUNICIPAL</small></span></a>
+  <div class="workspace-label"><span class="live-dot"></span> Central de suporte de TI</div>
+  <div class="nav-label">PRINCIPAL</div>
+  <nav>
+    <a class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">{% icon "grid" %} Visão geral</a>
+    <a class="{% if 'ticket' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ticket_list' %}">{% icon "ticket" %} {% if support_member %}Chamados{% else %}Meus chamados{% endif %}</a>
+    {% if support_member %}<a class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}">{% icon "chart" %} Indicadores</a>{% endif %}
+  </nav>
+  {% if desk_manager and user.is_staff %}<div class="nav-label">GESTÃO</div><nav><a href="{% url 'admin:index' %}"><span aria-hidden="true">⚙</span> Administração</a></nav>{% endif %}
+  <div class="sidebar-bottom"><div class="support-card"><span class="support-symbol">✳</span><strong>Suporte que conecta.</strong><p>Mais organização para cuidar dos serviços da sua cidade.</p></div><span class="sidebar-caption">SERVICE DESK MUNICIPAL · V1.0</span></div>
+</aside>
+<div class="app-shell">
+  <header class="topbar">
+    <span class="breadcrumb">Central de suporte <span>/</span> <strong>{% block breadcrumb %}Visão geral{% endblock %}</strong></span>
+    <div class="account"><span class="avatar">{{ user|initials }}</span><div><strong>{{ user|person }}</strong><small>{% if desk_manager %}Gestor de TI{% elif support_member %}Técnico de TI{% else %}Servidor municipal{% endif %}</small></div><details class="account-menu"><summary aria-label="Opções da conta">{% icon "chevron" %}</summary><div><a href="{% url 'password_change' %}">Alterar senha</a><form action="{% url 'logout' %}" method="post">{% csrf_token %}<button type="submit">Sair da conta</button></form></div></details></div>
+  </header>
+  <main id="content" class="main-content">
+    {% if messages %}<div class="messages" aria-live="polite">{% for message in messages %}<div class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+    {% block content %}{% endblock %}
+    <footer class="page-footer"><span>Service Desk Municipal</span><span>Organização, rastreabilidade e cuidado em cada atendimento.</span></footer>
+  </main>
+</div>
+{% else %}
+<main id="content">{% block public_content %}{% endblock %}</main>
+{% endif %}
+</body>
+</html>
